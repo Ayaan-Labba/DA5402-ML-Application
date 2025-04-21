@@ -10,10 +10,10 @@ BASE_URL = 'https://www.alphavantage.co/query'
 
 # List of forex pairs to track
 FOREX_PAIRS = [
-    'OMR/USD',  # Omani Rial / US Dollar
-    'INR/USD',  # Indian Rupee / US Dollar
-    'NZD/USD',  # NZ Dollar / US Dollar
-    'EUR/USD',  # Euro / US Dollar
+    'USD/OMR',  # US Dollar / Omani Rial
+    'USD/INR',  # US Dollar / Indian Rupee
+    'USD/NZD',  # US Dollar / NZ Dollar
+    'USD/EUR',  # US Dollar / Euro
 ]
 
 # Data collection parameters
