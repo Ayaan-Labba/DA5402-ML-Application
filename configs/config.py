@@ -1,0 +1,37 @@
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Alpha Vantage API configuration
+ALPHA_VANTAGE_API_KEY = os.getenv('ALPHA_VANTAGE_API_KEY')
+BASE_URL = 'https://www.alphavantage.co/query'
+
+# List of forex pairs to track
+FOREX_PAIRS = [
+    'OMR/USD',  # Omani Rial / US Dollar
+    'INR/USD',  # Indian Rupee / US Dollar
+    'NZD/USD',  # NZ Dollar / US Dollar
+    'EUR/USD',  # Euro / US Dollar
+]
+
+# Data collection parameters
+DEFAULT_OUTPUT_SIZE = 'full'  # 'compact' for latest 100 datapoints, 'full' for all available data
+
+# Database configuration
+DB_USERNAME = os.getenv('DB_USERNAME', 'postgres')
+DB_PASSWORD = os.getenv('DB_PASSWORD', 'postgres')
+DB_HOST = os.getenv('DB_HOST', 'localhost')
+DB_PORT = os.getenv('DB_PORT', '5432')
+DB_NAME = os.getenv('DB_NAME', 'forex_data')
+
+# Database connection string
+DB_CONNECTION_STRING = f"postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+
+# Model training configuration
+SEQUENCE_LENGTH = 30  # Number of days to look back for prediction
+FEATURES = ['open', 'high', 'low', 'close', 'volume']  # Features to use for training
+
+# Time intervals (in days) for creating additional features
+TIME_INTERVALS = [3, 7, 14, 30]
