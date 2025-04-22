@@ -175,3 +175,8 @@ cython_debug/
 
 # Airflow Environment created on WSL
 airflow_env/
+
+# Airflow folder
+airflow/airflow.cfg
+airflow/simple_auth_manager_passwords.json.generated
+airflow/airflow.db
