@@ -1,5 +1,5 @@
 import sys
-from sqlalchemy import create_engine, Table, Column, String, Float, Date, MetaData, select, text
+from sqlalchemy import create_engine, Table, Column, String, Float, Date, MetaData, text
 from sqlalchemy.dialects.postgresql import insert
 from datetime import datetime
 
@@ -83,7 +83,7 @@ def store_raw_data(engine, forex_data):
         metadata = MetaData()
         forex_raw = Table('forex_raw', metadata, autoload_with=engine)
         
-        with engine.connect() as conn:
+        with engine.begin() as conn:
             for pair, df in forex_data.items():
                 logger.info(f"Storing data for {pair}, {len(df)} records")
                 
@@ -109,8 +109,7 @@ def store_raw_data(engine, forex_data):
                     }
                 )
                 
-                result = conn.execute(stmt)
-                conn.commit()
+                conn.execute(stmt)
                 
                 logger.info(f"Stored {len(records)} records for {pair}")
         
