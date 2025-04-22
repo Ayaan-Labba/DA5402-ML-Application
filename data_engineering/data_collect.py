@@ -88,7 +88,7 @@ def fetch_data(base_curr, to_curr, output_size=DEFAULT_OUTPUT_SIZE):
         logger.error(f"Unexpected error fetching forex data: {str(e)}")
         return None
 
-def fetch_all_pairs(forex_pairs=FOREX_PAIRS, delay=20):
+def fetch_all_pairs(forex_pairs=FOREX_PAIRS, delay=15):
     """
     Fetch data for all specified forex pairs
     
