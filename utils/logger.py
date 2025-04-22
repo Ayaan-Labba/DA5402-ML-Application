@@ -1,6 +1,6 @@
 import logging
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from pythonjsonlogger import jsonlogger
 
@@ -8,7 +8,7 @@ from pythonjsonlogger import jsonlogger
 class CustomJsonFormatter(jsonlogger.JsonFormatter):
     def add_fields(self, log_record, record, message_dict):
         super(CustomJsonFormatter, self).add_fields(log_record, record, message_dict)
-        log_record['timestamp'] = datetime.now(datetime.timezone.utc).isoformat()
+        log_record['timestamp'] = datetime.now(timezone.utc).isoformat()
         log_record['level'] = record.levelname
         log_record['module'] = record.module
         log_record['function'] = record.funcName
