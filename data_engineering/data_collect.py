@@ -2,6 +2,10 @@ import requests
 import pandas as pd
 import time
 import json
+import sys
+
+# Set path to root
+sys.path.append("../")
 
 from configs.config import ALPHA_VANTAGE_API_KEY, BASE_URL, FOREX_PAIRS, DEFAULT_OUTPUT_SIZE
 from utils.logger import setup_logger
