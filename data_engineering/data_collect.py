@@ -11,7 +11,7 @@ from configs.config import ALPHA_VANTAGE_API_KEY, BASE_URL, FOREX_PAIRS, DEFAULT
 from utils.logger import setup_logger
 
 # Setup logger
-logger = setup_logger('data_collection')
+logger = setup_logger('data_collect')
 
 def fetch_data(base_curr, to_curr, output_size=DEFAULT_OUTPUT_SIZE):
     """
