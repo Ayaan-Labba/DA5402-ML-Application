@@ -32,14 +32,14 @@ def setup_logger(name, log_level=logging.INFO):
     # Console handler - display logs in console
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(log_level)
-    console_formatter = CustomJsonFormatter('%(timestamp)s %(level)s %(module)s %(function)s:%(line)s %(message)s')
+    console_formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(module)s | %(funcName)s:%(lineno)d | %(message)s') # not in json format
     console_handler.setFormatter(console_formatter)
     
     # File handler - print logs to logs/<log_file>
     log_file = log_dir / f"{name}_{datetime.now().strftime('%Y%m%d')}.log"
     file_handler = logging.FileHandler(log_file)
     file_handler.setLevel(log_level)
-    file_formatter = CustomJsonFormatter('%(timestamp)s %(level)s %(module)s %(function)s:%(line)s %(message)s')
+    file_formatter = CustomJsonFormatter('%(timestamp)s %(level)s %(module)s %(function)s:%(line)s %(message)s') # in json format
     file_handler.setFormatter(file_formatter)
     
     # Add handlers to logger
