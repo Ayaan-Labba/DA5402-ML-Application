@@ -1,9 +1,12 @@
 # Python json logger
-'python-json-logger@https://github.com/nhairs/python-json-logger/releases/download/v3.0.0/python_json_logger-3.0.0-py3-none-any.whl'
+python-json-logger@https://github.com/nhairs/python-json-logger/releases/download/v3.0.0/python_json_logger-3.0.0-py3-none-any.whl
+
+# Apache airflow version 3.0.0
+apache-airflow[celery]==3.0.0 --constraint https://raw.githubusercontent.com/apache/airflow/constraints-3.0.0/constraints-3.9.txt
 
 # Libraries
 requests
 pandas
 python-dotenv
 SQLAlchemy
-psycopg2
+psycopg2-binary
