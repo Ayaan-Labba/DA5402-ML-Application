@@ -1,0 +1,20 @@
+stages:
+  extract:
+    cmd: python data_engineering/load_data.py --output_dir data/raw
+    deps:
+      - data_engineering/load_data.py
+    outs:
+      - data/raw:
+          persist: true
+  
+  transform:
+    cmd: python data_engineering/prepare_data.py --input_dir data/raw --output_dir data/prepared --sequence_length 200 --prediction_horizon 1
+    deps:
+      - data_engineering/prepare_data.py
+      - data/raw
+    params:
+      - sequence_length
+      - prediction_horizon
+    outs:
+      - data/prepared:
+          persist: true
