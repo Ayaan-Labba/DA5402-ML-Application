@@ -2,14 +2,14 @@ from datetime import timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.operators.empty import EmptyOperator
-from airflow.utils.dates import days_ago
 from sqlalchemy import text
 import sys
 import pandas as pd
+import pendulum
 
 
 # Set path to root
-sys.path.append("../../")
+sys.path.append("/home/ayaan-ubuntu/DA5402/DA5402-ML-Application")
 
 # Import project modules
 from data_collection.data_collect import fetch_all_pairs
@@ -27,7 +27,7 @@ default_args = {
     'email_on_failure': False,
     'email_on_retry': False,
     'retries': 3,
-    'retry_delay': timedelta(minutes=5),
+    'retry_delay': timedelta(minutes=1),
 }
 
 # Define the DAG
@@ -35,8 +35,8 @@ dag = DAG(
     'forex_data_pipeline',
     default_args=default_args,
     description='Forex data collection pipeline',
-    schedule_interval='0 1 * * *',  # Run daily at 1:00 AM
-    start_date=days_ago(1),
+    schedule='0 1 * * *',  # Run daily at 1:00 AM
+    start_date=pendulum.now().subtract(days=1),
     catchup=False,
     tags=['forex', 'data_pipeline'],
 )
@@ -58,12 +58,21 @@ def fetch_forex_data():
         return False
     
     logger.info(f"Fetched data for {len(forex_data)} forex pairs")
-    return {pair: df.to_dict() for pair, df in forex_data.items()}
+
+    # Store real dataframes inside XCom temporarily serialized
+    forex_data_dict = {}
+    for pair, df in forex_data.items():
+        df_serializable = df.copy()
+        for col in df_serializable.select_dtypes(include=['datetime64[ns]', 'datetime64[ns, UTC]']).columns:
+            df_serializable[col] = df_serializable[col].astype(str)
+        forex_data_dict[pair] = df_serializable.to_dict()
+    
+    return forex_data_dict
 
 # Task to store raw forex data in database
-def store_raw_data(**context):
+def store_raw_data_db(**kwargs):
     logger.info("Starting raw data storage")
-    ti = context['ti']
+    ti = kwargs['ti']
     forex_data_dict = ti.xcom_pull(task_ids='fetch_forex_data')
     
     if not forex_data_dict:
@@ -72,7 +81,16 @@ def store_raw_data(**context):
     
     forex_data = {}
     for pair, data_dict in forex_data_dict.items():
-        forex_data[pair] = pd.DataFrame.from_dict(data_dict)
+        df = pd.DataFrame.from_dict(data_dict)
+        
+        # Convert datetime columns back to datetime
+        for col in df.columns:
+            try:
+                df[col] = pd.to_datetime(df[col])
+            except (ValueError, TypeError):
+                pass  # not a datetime column
+        
+        forex_data[pair] = df
     
     engine = create_DBengine()
     records_stored = store_raw_data(engine, forex_data)
@@ -119,8 +137,8 @@ fetch_forex = PythonOperator(
 
 store_raw = PythonOperator(
     task_id='store_raw_data',
-    python_callable=store_raw_data,
-    provide_context=True,
+    python_callable=store_raw_data_db,
+    op_kwargs={},
     dag=dag,
 )
 
@@ -139,7 +157,7 @@ end = EmptyOperator(
 start >> init_db >> fetch_forex >> store_raw >> quality_check >> end
 
 if __name__ == "__main__":
-    # For testing purposes only
+    # For testing purposes
     init_database()
     forex_data_dict = fetch_forex_data()
     if forex_data_dict:
