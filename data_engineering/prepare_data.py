@@ -100,7 +100,7 @@ def transform_data(df, sequence_length=60, prediction_horizon=1):
         logger.error(f"Error transforming data: {str(e)}")
         return pd.DataFrame()
 
-def transform_all_pairs(input_dir="data/raw_data", output_dir="data/processed_data", sequence_length=60, prediction_horizon=1):
+def transform_all_pairs(input_dir="data/raw_data", output_dir="data/prepared_data", sequence_length=60, prediction_horizon=1):
     """
     Transform data for all forex pairs and save to CSV files
     

@@ -1,0 +1,3 @@
+# Data transformation parameters
+sequence_length: 200
+prediction_horizon: 1
