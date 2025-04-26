@@ -52,7 +52,7 @@ def load_pair_data(pair, start_date=None, end_date=None):
         logger.error(f"Error extracting data for {pair}: {str(e)}")
         return pd.DataFrame()
 
-def load_all_pairs(output_dir="data", start_date=None, end_date=None):
+def load_all_pairs(output_dir="data/raw_data", start_date=None, end_date=None):
     """
     Extract data for all forex pairs and save to CSV files
     
