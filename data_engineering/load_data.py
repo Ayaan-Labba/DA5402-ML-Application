@@ -1,18 +1,32 @@
 import sys
 import pandas as pd
-from sqlalchemy import text
+from sqlalchemy import create_engine, text
 from datetime import datetime
 import os
 
-# # Set path to root
+# Set path to root
 sys.path.append(os.getcwd())
 
-from data_collection.data_store import create_DBengine
-from configs.config import FOREX_PAIRS
+from configs.config import FOREX_PAIRS, DB_CONNECTION_STRING
 from utils.logger import setup_logger
 
 # Setup logger
 logger = setup_logger('data_loading')
+
+def create_DBengine():
+    """
+    Create database engine connection
+    
+    Returns:
+        sqlalchemy.engine.Engine: SQLAlchemy engine
+    """
+    try:
+        engine = create_engine(DB_CONNECTION_STRING)
+        logger.info("Database engine created successfully")
+        return engine
+    except Exception as e:
+        logger.error(f"Error creating database engine: {str(e)}")
+        raise
 
 def load_pair_data(pair, start_date=None, end_date=None):
     """
@@ -41,9 +55,9 @@ def load_pair_data(pair, start_date=None, end_date=None):
         
         query += " ORDER BY date ASC"
         
-        # Execute query
-        logger.info(f"Extracting data for {pair} from database")
-        df = pd.read_sql(query, engine)
+        # Execute query with connection
+        with engine.connect() as connection:
+            df = pd.read_sql(query, connection)
         
         logger.info(f"Extracted {len(df)} records for {pair}")
         return df

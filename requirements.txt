@@ -9,4 +9,4 @@ requests
 pandas
 python-dotenv
 SQLAlchemy
-psycopg2-binary
+psycopg2

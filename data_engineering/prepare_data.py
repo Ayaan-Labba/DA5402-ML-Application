@@ -30,7 +30,7 @@ def transform_data(df, sequence_length=60, prediction_horizon=1):
 
         # Convert date to datetime if it's not already
         if df_new['date'].dtype != 'datetime64[ns]':
-            df_new['date'] = pd.to_datetime(df['date'])
+            df_new['date'] = pd.to_datetime(df_new['date'])
         
         # Sort by date
         df_new = df_new.sort_values('date')
@@ -64,8 +64,8 @@ def transform_data(df, sequence_length=60, prediction_horizon=1):
         # 4. Bollinger Bands
         BB_middle = clean_df['MA22']
         clean_df['BB_std'] = clean_df['close'].rolling(window=22).std()
-        clean_df['BB_upper'] = BB_middle + 2 * clean_df['bb_std']
-        clean_df['BB_lower'] = BB_middle - 2 * clean_df['bb_std']
+        clean_df['BB_upper'] = BB_middle + 2 * clean_df['BB_std']
+        clean_df['BB_lower'] = BB_middle - 2 * clean_df['BB_std']
         
         # 5. MACD
         ema_12 = df['close'].ewm(span=12, adjust=False).mean()

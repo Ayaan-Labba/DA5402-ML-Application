@@ -1,31 +1,34 @@
 schema: '2.0'
 stages:
   extract:
-    cmd: python data_engineering/load_data.py --output_dir data/raw
+    cmd: python data_engineering/load_data.py --output_dir data/raw --start_date 2023-01-01
     deps:
     - path: data_engineering/load_data.py
       hash: md5
-      md5: e3dbc8ce6349850d008cc33dd08cf3aa
-      size: 3394
+      md5: af2fef8ed9e50e501381206a292d3205
+      size: 3808
+    params:
+      params.yaml:
+        start_date: '2023-01-01'
     outs:
     - path: data/raw
       hash: md5
-      md5: d751713988987e9331980363e24189ce.dir
-      size: 0
-      nfiles: 0
+      md5: 115013131688b888031c453f08a976d1.dir
+      size: 183924
+      nfiles: 4
   transform:
     cmd: python data_engineering/prepare_data.py --input_dir data/raw --output_dir
       data/prepared --sequence_length 200 --prediction_horizon 1
     deps:
     - path: data/raw
       hash: md5
-      md5: d751713988987e9331980363e24189ce.dir
-      size: 0
-      nfiles: 0
+      md5: 115013131688b888031c453f08a976d1.dir
+      size: 183924
+      nfiles: 4
     - path: data_engineering/prepare_data.py
       hash: md5
-      md5: 0601eba0f4c8054b18d59e699730ca71
-      size: 6473
+      md5: 1248d912c5ec63cab2745688c29b2ebc
+      size: 6477
     params:
       params.yaml:
         prediction_horizon: 1
@@ -33,6 +36,6 @@ stages:
     outs:
     - path: data/prepared
       hash: md5
-      md5: d751713988987e9331980363e24189ce.dir
-      size: 0
-      nfiles: 0
+      md5: 394fa7802b0e296e4535b2ecbbdaffe7.dir
+      size: 141007
+      nfiles: 4

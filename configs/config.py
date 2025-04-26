@@ -28,10 +28,3 @@ DB_NAME = os.getenv('DB_NAME', 'forex_data')
 
 # Database connection string
 DB_CONNECTION_STRING = f"postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-
-# Model training configuration
-SEQUENCE_LENGTH = 30  # Number of days to look back for prediction
-FEATURES = ['open', 'high', 'low', 'close', 'volume']  # Features to use for training
-
-# Time intervals (in days) for creating additional features
-TIME_INTERVALS = [3, 7, 14, 30]
