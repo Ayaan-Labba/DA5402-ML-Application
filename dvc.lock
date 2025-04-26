@@ -1,0 +1,38 @@
+schema: '2.0'
+stages:
+  extract:
+    cmd: python data_engineering/load_data.py --output_dir data/raw
+    deps:
+    - path: data_engineering/load_data.py
+      hash: md5
+      md5: e3dbc8ce6349850d008cc33dd08cf3aa
+      size: 3394
+    outs:
+    - path: data/raw
+      hash: md5
+      md5: d751713988987e9331980363e24189ce.dir
+      size: 0
+      nfiles: 0
+  transform:
+    cmd: python data_engineering/prepare_data.py --input_dir data/raw --output_dir
+      data/prepared --sequence_length 200 --prediction_horizon 1
+    deps:
+    - path: data/raw
+      hash: md5
+      md5: d751713988987e9331980363e24189ce.dir
+      size: 0
+      nfiles: 0
+    - path: data_engineering/prepare_data.py
+      hash: md5
+      md5: 0601eba0f4c8054b18d59e699730ca71
+      size: 6473
+    params:
+      params.yaml:
+        prediction_horizon: 1
+        sequence_length: 200
+    outs:
+    - path: data/prepared
+      hash: md5
+      md5: d751713988987e9331980363e24189ce.dir
+      size: 0
+      nfiles: 0

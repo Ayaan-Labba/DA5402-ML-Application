@@ -5,7 +5,7 @@ import os
 from datetime import datetime, timedelta
 
 # Set path to root
-sys.path.append("../")
+sys.path.append(os.getcwd())
 
 from configs.config import FOREX_PAIRS
 from utils.logger import setup_logger

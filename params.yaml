@@ -1,3 +1,6 @@
-# Data transformation parameters
+# Data extraction parameters
+start_date: '2023-01-01'
+
+# Data preparation parameters
 sequence_length: 200
 prediction_horizon: 1

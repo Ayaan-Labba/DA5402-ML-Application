@@ -4,8 +4,8 @@ from sqlalchemy import text
 from datetime import datetime
 import os
 
-# Set path to root
-sys.path.append("../")
+# # Set path to root
+sys.path.append(os.getcwd())
 
 from data_collection.data_store import create_DBengine
 from configs.config import FOREX_PAIRS
@@ -95,7 +95,7 @@ if __name__ == "__main__":
                         help='Directory to save raw data files')
     parser.add_argument('--start_date', type=str, default=None, 
                         help='Start date in YYYY-MM-DD format')
-    parser.add_argument('--end_date', type=str, default=None, 
+    parser.add_argument('--end_date', type=str, default=datetime.now().strftime('%Y-%m-%d'), 
                         help='End date in YYYY-MM-DD format')
     
     args = parser.parse_args()
