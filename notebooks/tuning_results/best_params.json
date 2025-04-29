@@ -1,0 +1,12 @@
+{
+    "hidden_size": 512,
+    "num_layers": 1,
+    "dropout": 0.3,
+    "batch_size": 32,
+    "learning_rate": 0.001,
+    "num_epochs": 50,
+    "val_loss": 1.020425796508789,
+    "mae": 0.972931444644928,
+    "directional_accuracy": 0.4691358208656311,
+    "run_id": "4c60a18eca2a4fd284a35e3936208705"
+}
