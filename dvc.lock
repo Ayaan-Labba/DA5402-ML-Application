@@ -27,8 +27,8 @@ stages:
       nfiles: 4
     - path: data_engineering/prepare_data.py
       hash: md5
-      md5: 1248d912c5ec63cab2745688c29b2ebc
-      size: 6477
+      md5: b98cf6cda363167c9135f06111a8a1c2
+      size: 6949
     params:
       params.yaml:
         prediction_horizon: 1
@@ -36,6 +36,11 @@ stages:
     outs:
     - path: data/prepared
       hash: md5
-      md5: c4f7c997ba736350e413d70780df2bf7.dir
-      size: 768960
+      md5: ba47468e344d70d3396b3894cc383328.dir
+      size: 614973
+      nfiles: 4
+    - path: data/test
+      hash: md5
+      md5: 9abf6be37d905c3bb2c6cda4417efbf2.dir
+      size: 154379
       nfiles: 4

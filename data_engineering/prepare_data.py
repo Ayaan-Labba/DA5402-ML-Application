@@ -11,7 +11,7 @@ from configs.config import FOREX_PAIRS
 from utils.logger import setup_logger
 
 # Setup logger
-logger = setup_logger('data_transformation')
+logger = setup_logger('data_preparation')
 
 def transform_data(df, sequence_length=60, prediction_horizon=1):
     """
@@ -100,7 +100,7 @@ def transform_data(df, sequence_length=60, prediction_horizon=1):
         logger.error(f"Error transforming data: {str(e)}")
         return pd.DataFrame()
 
-def transform_all_pairs(input_dir="data/raw_data", output_dir="data/prepared_data", sequence_length=60, prediction_horizon=1):
+def transform_all_pairs(input_dir="data/raw", output_dir="data/prepared", sequence_length=60, prediction_horizon=1):
     """
     Transform data for all forex pairs and save to CSV files
     
@@ -115,6 +115,8 @@ def transform_all_pairs(input_dir="data/raw_data", output_dir="data/prepared_dat
     """
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
+    test_dir = output_dir.replace('prepared', 'test')
+    os.makedirs(test_dir, exist_ok=True)
     
     transformed_data = {}
     
@@ -131,19 +133,29 @@ def transform_all_pairs(input_dir="data/raw_data", output_dir="data/prepared_dat
             transformed_df = transform_data(df, sequence_length, prediction_horizon)
             
             if len(transformed_df) > 0:
+                # Split into train and test sets (80-20)
+                split_idx = int(len(transformed_df) * 0.8)
+                train_df = transformed_df[:split_idx]
+                test_df = transformed_df[split_idx:]
+
                 # Save to CSV
                 out_filename = pair.replace('/', '_') + '_transformed.csv'
-                output_path = os.path.join(output_dir, out_filename)
-                transformed_df.to_csv(output_path, index=False)
-                logger.info(f"Saved transformed data for {pair} to {output_path}")
-                
+                train_path = os.path.join(output_dir, out_filename)
+                test_path = os.path.join(test_dir, out_filename)
+
+                train_df.to_csv(train_path, index=False)
+                test_df.to_csv(test_path, index=False)
+
+                logger.info(f"Saved train data for {pair} to {train_path}")
+                logger.info(f"Saved test data for {pair} to {test_path}")
+
                 # Add to dictionary
                 transformed_data[pair] = transformed_df
             else:
-                logger.warning(f"Transformation resulted in empty DataFrame for {pair}")
+                logger.warning(f"Transformation resulted in empty DataFrame for {pair}")       
         else:
             logger.warning(f"Raw data file not found for {pair}: {input_path}")
-    
+
     return transformed_data
 
 if __name__ == "__main__":
@@ -152,8 +164,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Transform forex data for LSTM model')
     parser.add_argument('--input_dir', type=str, default='../data/raw', 
                         help='Directory with raw data files')
-    parser.add_argument('--output_dir', type=str, default='../data/processed', 
-                        help='Directory to save processed data files')
+    parser.add_argument('--output_dir', type=str, default='../data/prepared', 
+                        help='Directory to save prepared data files')
     parser.add_argument('--sequence_length', type=int, default=60, 
                         help='Number of days in input sequence')
     parser.add_argument('--prediction_horizon', type=int, default=1, 
