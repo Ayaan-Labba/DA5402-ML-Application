@@ -4,3 +4,24 @@ start_date: '2016-01-01'
 # Data preparation parameters
 sequence_length: 1000
 prediction_horizon: 1
+
+# MLflow configuration
+mlflow_tracking_uri: './mlruns'
+experiment_name: 'forex_prediction'
+
+# Model parameters
+model:
+  hidden_size: 64
+  num_layers: 2
+  dropout: 0.2
+
+# Training parameters
+training:
+  batch_size: 32
+  learning_rate: 0.001
+  num_epochs: 50
+
+# Drift detection parameters
+drift:
+  threshold: 0.3
+  trigger_rebuild: 1
