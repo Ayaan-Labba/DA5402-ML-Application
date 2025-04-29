@@ -23,67 +23,67 @@ stages:
       - data/test:
           persist: true
     
-  #   hyperparameter_tuning:
-  #   cmd: python model_training/tuning.py --data_path data/prepared/USD_INR_transformed.csv --sequence_length ${sequence_length} --mlflow_tracking_uri ${mlflow_tracking_uri} --experiment_name ${experiment_name}_tuning
-  #   deps:
-  #     - model_training/tuning.py
-  #     - data/prepared/USD_INR_transformed.csv
-  #   params:
-  #     - sequence_length
-  #     - mlflow_tracking_uri
-  #     - experiment_name
-  #   outs:
-  #     - tuning_results:
-  #         persist: true
+  hyperparameter_tuning:
+    cmd: python model_training/tuning.py --data_path data/prepared/USD_INR_transformed.csv --train_sequence ${train_sequence} --mlflow_tracking_uri ${mlflow_tracking_uri} --experiment_name ${experiment_name}_tuning
+    deps:
+      - model_training/tuning.py
+      - data/prepared/USD_INR_transformed.csv
+    params:
+      - train_sequence
+      - mlflow_tracking_uri
+      - experiment_name
+    outs:
+      - model_training/tuning_results:
+          persist: true
   
-  # train:
-  #   cmd: >
-  #     python model_training/train.py 
-  #     --data_path data/prepared/USD_INR_transformed.csv
-  #     --sequence_length ${sequence_length} 
-  #     --hidden_size ${model.hidden_size} 
-  #     --num_layers ${model.num_layers} 
-  #     --dropout ${model.dropout} 
-  #     --batch_size ${training.batch_size} 
-  #     --learning_rate ${training.learning_rate} 
-  #     --num_epochs ${training.num_epochs} 
-  #     --mlflow_tracking_uri ${mlflow_tracking_uri} 
-  #     --experiment_name ${experiment_name} 
-  #     --model_dir models
-  #   deps:
-  #     - model_training/train.py
-  #     - data/prepared/USD_INR_transformed.csv
-  #     - tuning_results/best_params.json
-  #   params:
-  #     - sequence_length
-  #     - model
-  #     - training
-  #     - mlflow_tracking_uri
-  #     - experiment_name
-  #   outs:
-  #     - models:
-  #         persist: true
+  train:
+    cmd: >
+      python model_training/train.py 
+      --data_path data/prepared/USD_INR_transformed.csv
+      --sequence_length ${sequence_length} 
+      --hidden_size ${model.hidden_size} 
+      --num_layers ${model.num_layers} 
+      --dropout ${model.dropout} 
+      --batch_size ${training.batch_size} 
+      --learning_rate ${training.learning_rate} 
+      --num_epochs ${training.num_epochs} 
+      --mlflow_tracking_uri ${mlflow_tracking_uri} 
+      --experiment_name ${experiment_name} 
+      --model_dir models
+    deps:
+      - model_training/train.py
+      - data/prepared/USD_INR_transformed.csv
+      - tuning_results/best_params.json
+    params:
+      - sequence_length
+      - model
+      - training
+      - mlflow_tracking_uri
+      - experiment_name
+    outs:
+      - models:
+          persist: true
   
-  # evaluate:
-  #   cmd: >
-  #     python model_training/evaluation.py 
-  #     --model_run_id $(cat models/model_info_*.json | jq -r '.run_id') 
-  #     --data_path data/prepared/test_data.csv 
-  #     --sequence_length ${sequence_length} 
-  #     --reference_data_path data/prepared/train_data.csv 
-  #     --mlflow_tracking_uri ${mlflow_tracking_uri} 
-  #     --output_dir evaluation_results
-  #   deps:
-  #     - model_training/evaluation.py
-  #     - data/prepared/test_data.csv
-  #     - data/prepared/train_data.csv
-  #     - models
-  #   params:
-  #     - sequence_length
-  #     - mlflow_tracking_uri
-  #   outs:
-  #     - evaluation_results:
-  #         persist: true
+  evaluate:
+    cmd: >
+      python model_training/evaluation.py 
+      --model_run_id $(cat models/model_info_*.json | jq -r '.run_id') 
+      --data_path data/prepared/test_data.csv 
+      --sequence_length ${sequence_length} 
+      --reference_data_path data/prepared/train_data.csv 
+      --mlflow_tracking_uri ${mlflow_tracking_uri} 
+      --output_dir evaluation_results
+    deps:
+      - model_training/evaluation.py
+      - data/prepared/test_data.csv
+      - data/prepared/train_data.csv
+      - models
+    params:
+      - sequence_length
+      - mlflow_tracking_uri
+    outs:
+      - evaluation_results:
+          persist: true
   
   # check_drift:
   #   cmd: >

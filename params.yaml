@@ -6,8 +6,9 @@ sequence_length: 1000
 prediction_horizon: 1
 
 # MLflow configuration
-mlflow_tracking_uri: './mlruns'
+mlflow_tracking_uri: "http://localhost:5000"
 experiment_name: 'forex_prediction'
+train_sequence: 700
 
 # Model parameters
 model:

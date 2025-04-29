@@ -180,7 +180,7 @@ def main():
     parser.add_argument('--sequence_length', type=int, default=20, help='Sequence length for LSTM')
     parser.add_argument('--reference_data_path', type=str, required=True, 
                         help='Path to reference data for drift detection')
-    parser.add_argument('--mlflow_tracking_uri', type=str, default='./mlruns', 
+    parser.add_argument('--mlflow_tracking_uri', type=str, default='http://localhost:5000', 
                         help='MLflow tracking URI')
     parser.add_argument('--output_dir', type=str, default='evaluation_results',
                         help='Directory to save evaluation results')

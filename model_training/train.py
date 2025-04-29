@@ -13,6 +13,7 @@ import mlflow
 import mlflow.pytorch
 import json
 from datetime import datetime
+from tqdm import tqdm
 
 # Set path to root
 sys.path.append(os.getcwd())
@@ -47,7 +48,7 @@ class LSTMModel(nn.Module):
         out = self.fc(out[:, -1, :])
         return out
 
-def prepare_data(data_path, sequence_length):
+def prepare_data(data_path, train_sequence):
     """
     Load and prepare data for LSTM model
     """
@@ -62,31 +63,38 @@ def prepare_data(data_path, sequence_length):
     features = df.drop('target', axis=1).values
     target = df['target'].values
     
-    # Normalize features
-    scaler = StandardScaler()
-    features_scaled = scaler.fit_transform(features)
-    
-    # Create sequences for LSTM
+    # Create sequences
     X, y = [], []
-    for i in range(len(features_scaled) - sequence_length):
-        X.append(features_scaled[i:i + sequence_length])
-        y.append(target[i + sequence_length])
+    for i in range(len(features) - train_sequence):
+        X.append(features[i:i + train_sequence])
+        y.append(target[i + train_sequence])
     
     X = np.array(X)
     y = np.array(y).reshape(-1, 1)
     
-    # Split data
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=False)
+    # Split into training and testing (before scaling!)
+    X_train_raw, X_test_raw, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=False)
+    
+    # Flatten X for scaling (scale each timestep feature independently)
+    num_features = X.shape[2]
+    scaler = StandardScaler()
+    
+    X_train_flat = X_train_raw.reshape(-1, num_features)
+    X_test_flat = X_test_raw.reshape(-1, num_features)
+    
+    X_train_scaled = scaler.fit_transform(X_train_flat).reshape(X_train_raw.shape)
+    X_test_scaled = scaler.transform(X_test_flat).reshape(X_test_raw.shape)
     
     # Convert to PyTorch tensors
-    X_train = torch.tensor(X_train, dtype=torch.float32)
+    X_train = torch.tensor(X_train_scaled, dtype=torch.float32)
     y_train = torch.tensor(y_train, dtype=torch.float32)
-    X_test = torch.tensor(X_test, dtype=torch.float32)
+    X_test = torch.tensor(X_test_scaled, dtype=torch.float32)
     y_test = torch.tensor(y_test, dtype=torch.float32)
     
     return X_train, y_train, X_test, y_test, scaler
 
-def train_and_evaluate(X_train, y_train, X_test, y_test, model_params, training_params):
+
+def train_and_evaluate(X_train, y_train, X_val, y_val, model_params, training_params):
     """
     Train and evaluate LSTM model
     """
@@ -116,7 +124,8 @@ def train_and_evaluate(X_train, y_train, X_test, y_test, model_params, training_
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     
     # Start MLflow run
-    with mlflow.start_run():
+    run_name = f"hs{hidden_size}_nl{num_layers}_dr{dropout}_bs{batch_size}_lr{learning_rate}"
+    with mlflow.start_run(run_name=run_name):
         # Log model parameters
         mlflow.log_params({
             "hidden_size": hidden_size,
@@ -126,12 +135,19 @@ def train_and_evaluate(X_train, y_train, X_test, y_test, model_params, training_
             "learning_rate": learning_rate,
             "num_epochs": num_epochs,
             "input_size": input_size,
-            "sequence_length": X_train.shape[1]
+            "train_sequence": X_train.shape[1]
         })
         
         # Training loop
         logger.info("Starting training...")
-        for epoch in range(num_epochs):
+
+        # best_val_loss = float('inf')
+        # patience = training_params.get('patience', 10)
+        # counter = 0
+        # best_model_state = None
+
+        pbar = tqdm(range(num_epochs), desc="Training Progress")
+        for epoch in pbar:
             model.train()
             total_loss = 0
             
@@ -152,34 +168,46 @@ def train_and_evaluate(X_train, y_train, X_test, y_test, model_params, training_
             # Calculate average loss for the epoch
             avg_loss = total_loss / len(train_loader)
             
-            # Evaluate on test set
+            # Evaluate on val set
             model.eval()
             with torch.no_grad():
-                test_X, test_y = X_test.to(device), y_test.to(device)
-                predictions = model(test_X)
-                test_loss = criterion(predictions, test_y).item()
+                val_X, val_y = X_val.to(device), y_val.to(device)
+                predictions = model(val_X)
+                val_loss = criterion(predictions, val_y).item()
                 
                 # Calculate metrics
-                mae = torch.mean(torch.abs(predictions - test_y)).item()
+                mae = torch.mean(torch.abs(predictions - val_y)).item()
                 
                 # For directional accuracy
-                actual_direction = (test_y[1:] > test_y[:-1]).float()
+                actual_direction = (val_y[1:] > val_y[:-1]).float()
                 pred_direction = (predictions[1:] > predictions[:-1]).float()
                 directional_accuracy = torch.mean((actual_direction == pred_direction).float()).item()
             
+            # if val_loss < best_val_loss:
+            #     best_val_loss = val_loss
+            #     best_model_state = model.state_dict()
+            #     counter = 0
+            # else:
+            #     counter += 1
+            #     if counter >= patience:
+            #         logger.info(f"Early stopping triggered at epoch {epoch+1}")
+            #         break
+
             # Log metrics to MLflow
             mlflow.log_metrics({
                 "train_loss": avg_loss,
-                "test_loss": test_loss,
+                "val_loss": val_loss,
                 "mae": mae,
                 "directional_accuracy": directional_accuracy
             }, step=epoch)
             
-            logger.info(f"Epoch [{epoch+1}/{num_epochs}], "
-                  f"Train Loss: {avg_loss:.4f}, "
-                  f"Test Loss: {test_loss:.4f}, "
-                  f"MAE: {mae:.4f}, "
-                  f"Dir Acc: {directional_accuracy:.4f}")
+            # Update tqdm progress bar in-place
+            pbar.set_postfix({
+                'Train Loss': f"{avg_loss:.4f}",
+                'Val Loss': f"{val_loss:.4f}",
+                'MAE': f"{mae:.4f}",
+                'Dir Acc': f"{directional_accuracy:.4f}"
+            })
         
         # Save model
         mlflow.pytorch.log_model(model, "model")
@@ -190,7 +218,7 @@ def train_and_evaluate(X_train, y_train, X_test, y_test, model_params, training_
         
         # Return model and metrics for further use
         final_metrics = {
-            "test_loss": test_loss,
+            "val_loss": val_loss,
             "mae": mae,
             "directional_accuracy": directional_accuracy,
             "run_id": run_id
@@ -215,14 +243,14 @@ def save_model_info(metrics, model_dir, run_id):
 def main():
     parser = argparse.ArgumentParser(description='Train LSTM model for forex prediction')
     parser.add_argument('--data_path', type=str, required=True, help='Path to prepared data')
-    parser.add_argument('--sequence_length', type=int, default=20, help='Sequence length for LSTM')
+    parser.add_argument('--train_sequence', type=int, default=20, help='Sequence length for LSTM')
     parser.add_argument('--hidden_size', type=int, default=64, help='Hidden size of LSTM')
     parser.add_argument('--num_layers', type=int, default=2, help='Number of LSTM layers')
     parser.add_argument('--dropout', type=float, default=0.2, help='Dropout rate')
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size')
     parser.add_argument('--learning_rate', type=float, default=0.001, help='Learning rate')
     parser.add_argument('--num_epochs', type=int, default=50, help='Number of epochs')
-    parser.add_argument('--mlflow_tracking_uri', type=str, default='./mlruns', 
+    parser.add_argument('--mlflow_tracking_uri', type=str, default='http://localhost:5000', 
                         help='MLflow tracking URI')
     parser.add_argument('--experiment_name', type=str, default='forex_prediction',
                         help='MLflow experiment name')
@@ -236,7 +264,7 @@ def main():
     mlflow.set_experiment(args.experiment_name)
     
     # Prepare data
-    X_train, y_train, X_test, y_test, scaler = prepare_data(args.data_path, args.sequence_length)
+    X_train, y_train, X_val, y_val, _ = prepare_data(args.data_path, args.train_sequence)
     
     # Model parameters
     model_params = {
@@ -253,7 +281,7 @@ def main():
     }
     
     # Train and evaluate model
-    model, metrics = train_and_evaluate(X_train, y_train, X_test, y_test, 
+    _, metrics = train_and_evaluate(X_train, y_train, X_val, y_val, 
                                       model_params, training_params)
     
     # Save model info

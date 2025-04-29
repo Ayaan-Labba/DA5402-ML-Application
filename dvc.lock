@@ -44,3 +44,27 @@ stages:
       md5: 9abf6be37d905c3bb2c6cda4417efbf2.dir
       size: 154379
       nfiles: 4
+  hyperparameter_tuning:
+    cmd: python model_training/tuning.py --data_path data/prepared/USD_INR_transformed.csv
+      --train_sequence 700 --mlflow_tracking_uri http://localhost:5000 --experiment_name
+      forex_prediction_tuning
+    deps:
+    - path: data/prepared/USD_INR_transformed.csv
+      hash: md5
+      md5: bfed29e49b2f0ebb16f467be31b44ff1
+      size: 153815
+    - path: model_training/tuning.py
+      hash: md5
+      md5: 31725e4e09be98f072375172bd81fc80
+      size: 4848
+    params:
+      params.yaml:
+        experiment_name: forex_prediction
+        mlflow_tracking_uri: http://localhost:5000
+        train_sequence: 700
+    outs:
+    - path: model_training/tuning_results
+      hash: md5
+      md5: 1cab8351f6cd751b7503cf377f2b76da.dir
+      size: 1178
+      nfiles: 2

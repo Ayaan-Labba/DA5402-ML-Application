@@ -40,7 +40,7 @@ def main():
     parser = argparse.ArgumentParser(description='Save latest MLflow run ID')
     parser.add_argument('--experiment_name', type=str, default='forex_prediction',
                         help='MLflow experiment name')
-    parser.add_argument('--mlflow_tracking_uri', type=str, default='./mlruns', 
+    parser.add_argument('--mlflow_tracking_uri', type=str, default='http://localhost:5000', 
                         help='MLflow tracking URI')
     parser.add_argument('--output_file', type=str, default='models/latest_run_id.txt',
                         help='Output file to save the run ID')

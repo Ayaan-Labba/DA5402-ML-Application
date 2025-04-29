@@ -7,6 +7,8 @@ import torch
 import mlflow
 import json
 from itertools import product
+import warnings
+import logging
 
 # Set path to root
 sys.path.append(os.getcwd())
@@ -17,7 +19,7 @@ from utils.logger import setup_logger
 # Setup logging
 logger = setup_logger("Hyperparameter Tuning")
 
-def run_hyperparameter_tuning(data_path, sequence_length, param_grid, mlflow_tracking_uri, experiment_name):
+def run_hyperparameter_tuning(data_path, train_sequence, param_grid, mlflow_tracking_uri, experiment_name):
     """
     Run hyperparameter tuning with MLflow tracking
     """
@@ -26,7 +28,7 @@ def run_hyperparameter_tuning(data_path, sequence_length, param_grid, mlflow_tra
     mlflow.set_experiment(experiment_name)
     
     # Prepare data
-    X_train, y_train, X_test, y_test, scaler = prepare_data(data_path, sequence_length)
+    X_train, y_train, X_val, y_val, _ = prepare_data(data_path, train_sequence)
     
     # Generate all combinations of hyperparameters
     param_combinations = list(product(
@@ -62,7 +64,7 @@ def run_hyperparameter_tuning(data_path, sequence_length, param_grid, mlflow_tra
         }
         
         # Train and evaluate model
-        model, metrics = train_and_evaluate(X_train, y_train, X_test, y_test, 
+        _, metrics = train_and_evaluate(X_train, y_train, X_val, y_val, 
                                           model_params, training_params)
         
         # Store results
@@ -73,7 +75,7 @@ def run_hyperparameter_tuning(data_path, sequence_length, param_grid, mlflow_tra
             'batch_size': batch_size,
             'learning_rate': learning_rate,
             'num_epochs': num_epochs,
-            'test_loss': metrics['test_loss'],
+            'val_loss': metrics['val_loss'],
             'mae': metrics['mae'],
             'directional_accuracy': metrics['directional_accuracy'],
             'run_id': metrics['run_id']
@@ -84,18 +86,18 @@ def run_hyperparameter_tuning(data_path, sequence_length, param_grid, mlflow_tra
     # Create results dataframe
     results_df = pd.DataFrame(results)
     
-    # Find best model based on test loss
-    best_idx = results_df['test_loss'].idxmin()
+    # Find best model based on val loss
+    best_idx = results_df['val_loss'].idxmin()
     best_model = results_df.iloc[best_idx]
     
-    logger.info(f"Best model found with test_loss: {best_model['test_loss']:.4f}")
+    logger.info(f"Best model found with val_loss: {best_model['val_loss']:.4f}")
     logger.info(f"Best hyperparameters: {best_model.to_dict()}")
     
     # Save results
-    os.makedirs('tuning_results', exist_ok=True)
-    results_df.to_csv('tuning_results/hyperparameter_results.csv', index=False)
+    os.makedirs('model_training/tuning_results', exist_ok=True)
+    results_df.to_csv('model_training/tuning_results/hyperparameter_results.csv', index=False)
     
-    with open('tuning_results/best_params.json', 'w') as f:
+    with open('model_training/tuning_results/best_params.json', 'w') as f:
         json.dump(best_model.to_dict(), f, indent=4)
     
     return best_model.to_dict()
@@ -103,28 +105,34 @@ def run_hyperparameter_tuning(data_path, sequence_length, param_grid, mlflow_tra
 def main():
     parser = argparse.ArgumentParser(description='Run hyperparameter tuning for forex prediction model')
     parser.add_argument('--data_path', type=str, required=True, help='Path to prepared data')
-    parser.add_argument('--sequence_length', type=int, default=20, help='Sequence length for LSTM')
-    parser.add_argument('--mlflow_tracking_uri', type=str, default='./mlruns', 
+    parser.add_argument('--train_sequence', type=int, default=20, help='Sequence length for LSTM')
+    parser.add_argument('--mlflow_tracking_uri', type=str, default='http://localhost:5000', 
                         help='MLflow tracking URI')
     parser.add_argument('--experiment_name', type=str, default='forex_prediction_tuning',
                         help='MLflow experiment name')
-    
+
+    # Suppress warnings from mlflow (and related libraries)
+    logging.getLogger("mlflow").setLevel(logging.ERROR)
+
+    # Alternatively, use warnings module to suppress UserWarnings from mlflow
+    warnings.filterwarnings("ignore", category=UserWarning, module="mlflow")
+
     args = parser.parse_args()
     
     # Define hyperparameter grid
     param_grid = {
-        'hidden_size': [32, 64, 128],
+        'hidden_size': [512],
         'num_layers': [1, 2],
-        'dropout': [0.1, 0.2, 0.3],
-        'batch_size': [16, 32, 64],
-        'learning_rate': [0.01, 0.001],
-        'num_epochs': [30, 50]
+        'dropout': [0.2, 0.4],
+        'batch_size': [32, 64],
+        'learning_rate': [0.001],
+        'num_epochs': [100]
     }
     
     # Run hyperparameter tuning
     best_params = run_hyperparameter_tuning(
         args.data_path,
-        args.sequence_length,
+        args.train_sequence,
         param_grid,
         args.mlflow_tracking_uri,
         args.experiment_name
