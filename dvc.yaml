@@ -102,16 +102,18 @@ stages:
   #     - model_monitoring:
   #         persist: true
   
-  # save_model:
-  #   cmd: python model_training/save_run.py --run_id $(cat models/model_info_*.json | jq -r '.run_id') --mlflow_tracking_uri ${mlflow_tracking_uri} --output_dir model_deployment
-  #   deps:
-  #     - model_training/save_run.py
-  #     - models
-  #     - evaluation_results
-  #   params:
-  #     - mlflow_tracking_uri
-  #   outs:
-  #     - model_deployment:
-  #         persist: true
-  #   always_changed: true
-  #   frozen: false
+  save_model:
+    cmd: >
+      python model_training/save_model.py
+      --run_id $(cat model_training/tuning_results/best_params.json | jq -r '.run_id')
+      --mlflow_tracking_uri ${mlflow_tracking_uri}
+      --output_dir model_deployment
+    deps:
+      - model_training/save_model.py
+      - model_training/tuning_results/best_params.json
+    params:
+      - mlflow_tracking_uri
+    outs:
+      - model_deployment:
+          persist: true
+    always_changed: true
