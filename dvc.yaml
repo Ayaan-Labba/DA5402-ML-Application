@@ -40,7 +40,7 @@ stages:
     cmd: >
       python model_training/train.py 
       --data_path data/prepared/USD_INR_transformed.csv
-      --sequence_length ${sequence_length} 
+      --train_sequence ${train_sequence} 
       --hidden_size ${model.hidden_size} 
       --num_layers ${model.num_layers} 
       --dropout ${model.dropout} 
@@ -55,34 +55,34 @@ stages:
       - data/prepared/USD_INR_transformed.csv
       - tuning_results/best_params.json
     params:
-      - sequence_length
+      - train_sequence
       - model
       - training
       - mlflow_tracking_uri
       - experiment_name
     outs:
-      - models:
+      - model_training/models:
           persist: true
   
   evaluate:
     cmd: >
       python model_training/evaluation.py 
-      --model_run_id $(cat models/model_info_*.json | jq -r '.run_id') 
-      --data_path data/prepared/test_data.csv 
-      --sequence_length ${sequence_length} 
-      --reference_data_path data/prepared/train_data.csv 
+      --model_run_id $(cat model_training/tuning_results/best_params.json | jq -r '.run_id') 
+      --data_path data/test/USD_INR_transformed.csv
+      --test_sequence ${test_sequence} 
+      --reference_data_path data/prepared/USD_INR_transformed.csv 
       --mlflow_tracking_uri ${mlflow_tracking_uri} 
-      --output_dir evaluation_results
+      --output_dir model_training/evaluation_results
     deps:
       - model_training/evaluation.py
-      - data/prepared/test_data.csv
-      - data/prepared/train_data.csv
-      - models
+      - data/test/USD_INR_transformed.csv
+      - data/prepared/USD_INR_transformed.csv
+      - model_training/tuning_results
     params:
-      - sequence_length
+      - test_sequence
       - mlflow_tracking_uri
     outs:
-      - evaluation_results:
+      - model_training/evaluation_results:
           persist: true
   
   # check_drift:

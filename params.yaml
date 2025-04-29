@@ -9,6 +9,7 @@ prediction_horizon: 1
 mlflow_tracking_uri: "http://localhost:5000"
 experiment_name: 'forex_prediction'
 train_sequence: 700
+test_sequence: 150
 
 # Model parameters
 model:

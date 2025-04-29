@@ -68,3 +68,36 @@ stages:
       md5: 1cab8351f6cd751b7503cf377f2b76da.dir
       size: 1178
       nfiles: 2
+  evaluate:
+    cmd: "python model_training/evaluation.py  --model_run_id $(cat model_training/tuning_results/best_params.json
+      | jq -r '.run_id')  --data_path data/test/USD_INR_transformed.csv --test_sequence
+      150  --reference_data_path data/prepared/USD_INR_transformed.csv  --mlflow_tracking_uri
+      http://localhost:5000  --output_dir model_training/evaluation_results\n"
+    deps:
+    - path: data/prepared/USD_INR_transformed.csv
+      hash: md5
+      md5: bfed29e49b2f0ebb16f467be31b44ff1
+      size: 153815
+    - path: data/test/USD_INR_transformed.csv
+      hash: md5
+      md5: 3bf7c5f88d126529d4a7ae28174e1caa
+      size: 38738
+    - path: model_training/evaluation.py
+      hash: md5
+      md5: 79a5f369532b96fcb009495ac3d10baf
+      size: 8731
+    - path: model_training/tuning_results
+      hash: md5
+      md5: 1cab8351f6cd751b7503cf377f2b76da.dir
+      size: 1178
+      nfiles: 2
+    params:
+      params.yaml:
+        mlflow_tracking_uri: http://localhost:5000
+        test_sequence: 150
+    outs:
+    - path: model_training/evaluation_results
+      hash: md5
+      md5: a820287149ed3096d2ec0579a58ad269.dir
+      size: 679762
+      nfiles: 16

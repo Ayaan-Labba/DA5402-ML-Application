@@ -13,6 +13,8 @@ from scipy.stats import ks_2samp
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+os.environ['QT_QPA_PLATFORM'] = 'offscreen'
+
 # Set path to root
 sys.path.append(os.getcwd())
 
@@ -21,7 +23,7 @@ from utils.logger import setup_logger
 # Setup logging
 logger = setup_logger("Hyperparameter Tuning")
 
-def prepare_inference_data(data_path, sequence_length):
+def prepare_inference_data(data_path, test_sequence):
     """
     Prepare data for model inference and drift detection
     """
@@ -42,9 +44,9 @@ def prepare_inference_data(data_path, sequence_length):
     
     # Create sequences for LSTM
     X, y = [], []
-    for i in range(len(features_scaled) - sequence_length):
-        X.append(features_scaled[i:i + sequence_length])
-        y.append(target[i + sequence_length])
+    for i in range(len(features_scaled) - test_sequence):
+        X.append(features_scaled[i:i + test_sequence])
+        y.append(target[i + test_sequence])
     
     X = np.array(X)
     y = np.array(y).reshape(-1, 1)
@@ -177,21 +179,21 @@ def main():
     parser = argparse.ArgumentParser(description='Evaluate forex prediction model')
     parser.add_argument('--model_run_id', type=str, required=True, help='MLflow run ID of the model')
     parser.add_argument('--data_path', type=str, required=True, help='Path to evaluation data')
-    parser.add_argument('--sequence_length', type=int, default=20, help='Sequence length for LSTM')
+    parser.add_argument('--test_sequence', type=int, default=150, help='Sequence length for LSTM')
     parser.add_argument('--reference_data_path', type=str, required=True, 
                         help='Path to reference data for drift detection')
     parser.add_argument('--mlflow_tracking_uri', type=str, default='http://localhost:5000', 
                         help='MLflow tracking URI')
-    parser.add_argument('--output_dir', type=str, default='evaluation_results',
+    parser.add_argument('--output_dir', type=str, default='model_training/evaluation_results',
                         help='Directory to save evaluation results')
     
     args = parser.parse_args()
     
     # Load reference data for drift detection
-    X_ref, _, _, _ = prepare_inference_data(args.reference_data_path, args.sequence_length)
+    X_ref, _, _, _ = prepare_inference_data(args.reference_data_path, args.test_sequence)
     
     # Load evaluation data
-    X_eval, y_eval, df_eval, scaler = prepare_inference_data(args.data_path, args.sequence_length)
+    X_eval, y_eval, df_eval, scaler = prepare_inference_data(args.data_path, args.test_sequence)
     
     # Load model
     model = load_model(args.model_run_id, args.mlflow_tracking_uri)
@@ -222,10 +224,10 @@ def main():
         "model_run_id": args.model_run_id,
         "evaluation_timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "metrics": metrics,
-        "drift_detected": drift_detected,
+        "drift_detected": bool(drift_detected),
         "drift_results": {k: {"ks_statistic": float(v["ks_statistic"]), 
                              "p_value": float(v["p_value"]), 
-                             "drift_detected": v["drift_detected"]} 
+                             "drift_detected": bool(v["drift_detected"])} 
                          for k, v in drift_results.items()}
     }
     
