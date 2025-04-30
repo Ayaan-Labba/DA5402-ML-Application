@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
@@ -9,16 +9,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements file
-COPY requirements.txt .
+COPY ./backend/requirements.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY app.py .
+COPY ./backend/app.py .
 
 # Copy model directory (will be mounted in production)
-COPY model_deployment ./model_deployment
+COPY ./model_deployment ./model_deployment
 
 # Expose the port the app runs on
 EXPOSE 8080
