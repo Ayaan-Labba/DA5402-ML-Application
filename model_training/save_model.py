@@ -42,7 +42,7 @@ def main():
         # Save model metadata
         model_metadata = {
             "run_id": args.run_id,
-            "model_path": "model/model.pth",
+            "model_path": "model/data/model.pth",
             "created_at": run.info.start_time,
             "metrics": run.data.metrics
         }

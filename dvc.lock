@@ -108,8 +108,8 @@ stages:
     deps:
     - path: model_training/save_model.py
       hash: md5
-      md5: 82e4663b69a1663728f42d0cbe5a7a25
-      size: 1989
+      md5: 912b06d567687f7de6c571d95fa738fe
+      size: 1994
     - path: model_training/tuning_results/best_params.json
       hash: md5
       md5: 5e9e4c06161484ab07e4ee44edf9ae6e
@@ -120,6 +120,6 @@ stages:
     outs:
     - path: model_deployment
       hash: md5
-      md5: dd6e2b66ce026c57a4d349508fd0e608.dir
-      size: 12729977
+      md5: 18130db47317b460406cc6ec96eeefac.dir
+      size: 12729982
       nfiles: 7

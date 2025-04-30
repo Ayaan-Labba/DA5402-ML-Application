@@ -55,7 +55,7 @@ app = FastAPI(
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Update this in production to specific origins
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -92,13 +92,13 @@ def load_model():
             model_metadata = json.load(f)
         
         # Load PyTorch model
-        model_path = os.path.join(MODEL_DIR, "model.pth")
+        model_path = os.path.join(MODEL_DIR, "data/model.pth")
         logger.info(f"Loading model from {model_path}")
         
         # Load the model state dict
-        model_state = torch.load(model_path, map_location=torch.device('cpu'))
+        model_state = torch.load(model_path, map_location=torch.device('cpu'), weights_only=False)
         
-        # Reconstruct the model (this depends on your specific model architecture)
+        # Reconstruct the model
         # Extract model parameters from metadata or state dict
         hidden_size = model_state.get("hidden_size", 512)
         num_layers = model_state.get("num_layers", 2)
