@@ -11,7 +11,7 @@ import logging
 import mlflow
 from datetime import datetime, timedelta
 import time
-from prometheus_client import Counter, Histogram, start_http_server
+from prometheus_client import REGISTRY, Counter, Histogram, start_http_server
 import uvicorn
 
 # Configure logging
@@ -22,13 +22,25 @@ logging.basicConfig(
 )
 logger = logging.getLogger("forex_prediction_api")
 
-# Initialize Prometheus metrics
-PREDICTION_COUNTER = Counter(
+def get_or_create_counter(name, description, labelnames):
+    try:
+        return REGISTRY._names_to_collectors[name]
+    except KeyError:
+        return Counter(name, description, labelnames)
+
+def get_or_create_histogram(name, description, labelnames):
+    try:
+        return REGISTRY._names_to_collectors[name]
+    except KeyError:
+        return Histogram(name, description, labelnames)
+
+PREDICTION_COUNTER = get_or_create_counter(
     "forex_predictions_total", 
     "Total number of forex predictions made",
     ["currency_pair"]
 )
-PREDICTION_LATENCY = Histogram(
+
+PREDICTION_LATENCY = get_or_create_histogram(
     "forex_prediction_latency_seconds", 
     "Time taken for prediction",
     ["currency_pair"]
