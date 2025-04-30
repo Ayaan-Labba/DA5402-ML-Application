@@ -186,3 +186,5 @@ airflow/airflow.db*
 mlartifacts/
 mlruns/
 /model_deployment
+
+*.conf
