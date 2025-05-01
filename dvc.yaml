@@ -24,21 +24,21 @@ stages:
           persist: true
     
   hyperparameter_tuning:
-    cmd: python model_training/tuning.py --data_path data/prepared/USD_INR_transformed.csv --train_sequence ${train_sequence} --mlflow_tracking_uri ${mlflow_tracking_uri} --experiment_name ${experiment_name}_tuning
+    cmd: python model_creation/tuning.py --data_path data/prepared/USD_INR_transformed.csv --train_sequence ${train_sequence} --mlflow_tracking_uri ${mlflow_tracking_uri} --experiment_name ${experiment_name}_tuning
     deps:
-      - model_training/tuning.py
+      - model_creation/tuning.py
       - data/prepared/USD_INR_transformed.csv
     params:
       - train_sequence
       - mlflow_tracking_uri
       - experiment_name
     outs:
-      - model_training/tuning_results:
+      - model_creation/tuning_results:
           persist: true
   
   train:
     cmd: >
-      python model_training/train.py 
+      python model_creation/train.py 
       --data_path data/prepared/USD_INR_transformed.csv
       --train_sequence ${train_sequence} 
       --hidden_size ${model.hidden_size} 
@@ -51,7 +51,7 @@ stages:
       --experiment_name ${experiment_name} 
       --model_dir models
     deps:
-      - model_training/train.py
+      - model_creation/train.py
       - data/prepared/USD_INR_transformed.csv
       - tuning_results/best_params.json
     params:
@@ -61,38 +61,38 @@ stages:
       - mlflow_tracking_uri
       - experiment_name
     outs:
-      - model_training/models:
+      - model_creation/models:
           persist: true
   
   evaluate:
     cmd: >
-      python model_training/evaluation.py 
-      --model_run_id $(cat model_training/tuning_results/best_params.json | jq -r '.run_id') 
+      python model_creation/evaluation.py 
+      --model_run_id $(cat model_creation/tuning_results/best_params.json | jq -r '.run_id') 
       --data_path data/test/USD_INR_transformed.csv
       --test_sequence ${test_sequence} 
       --reference_data_path data/prepared/USD_INR_transformed.csv 
       --mlflow_tracking_uri ${mlflow_tracking_uri} 
-      --output_dir model_training/evaluation_results
+      --output_dir model_creation/evaluation_results
     deps:
-      - model_training/evaluation.py
+      - model_creation/evaluation.py
       - data/test/USD_INR_transformed.csv
       - data/prepared/USD_INR_transformed.csv
-      - model_training/tuning_results
+      - model_creation/tuning_results
     params:
       - test_sequence
       - mlflow_tracking_uri
     outs:
-      - model_training/evaluation_results:
+      - model_creation/evaluation_results:
           persist: true
   
   # check_drift:
   #   cmd: >
-  #     python model_training/drift.py 
+  #     python model_creation/drift.py 
   #     --evaluation_results evaluation_results 
   #     --threshold ${drift.threshold} 
   #     --trigger_rebuild ${drift.trigger_rebuild}
   #   deps:
-  #     - model_training/drift.py
+  #     - model_creation/drift.py
   #     - evaluation_results
   #     - utils/logger.py
   #   params:
@@ -104,13 +104,13 @@ stages:
   
   save_model:
     cmd: >
-      python model_training/save_model.py
-      --run_id $(cat model_training/tuning_results/best_params.json | jq -r '.run_id')
+      python model_creation/save_model.py
+      --run_id $(cat model_creation/tuning_results/best_params.json | jq -r '.run_id')
       --mlflow_tracking_uri ${mlflow_tracking_uri}
       --output_dir model_deployment
     deps:
-      - model_training/save_model.py
-      - model_training/tuning_results/best_params.json
+      - model_creation/save_model.py
+      - model_creation/tuning_results/best_params.json
     params:
       - mlflow_tracking_uri
     outs:

@@ -9,17 +9,10 @@ from pathlib import Path
 # Set path to root
 sys.path.append(os.getcwd())
 
-# Dummy model class (update as per your model)
-class LSTMModel(torch.nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, dropout, output_size):
-        super(LSTMModel, self).__init__()
-        self.lstm = torch.nn.LSTM(input_size, hidden_size, num_layers, dropout=dropout, batch_first=True)
-        self.fc = torch.nn.Linear(hidden_size, output_size)
+from utils.logger import setup_logger
 
-    def forward(self, x):
-        _, (h_n, _) = self.lstm(x)
-        out = self.fc(h_n[-1])
-        return out
+# Setup logging
+logger = setup_logger("Save model weights")
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Save MLflow model for deployment")
@@ -36,7 +29,7 @@ def main():
         output_dir = Path(args.output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        print(f"Downloading model artifacts for run ID: {args.run_id}")
+        logger.info(f"Downloading model artifacts for run ID: {args.run_id}")
         model_dir = os.path.join(output_dir, "model")
         
         client = mlflow.tracking.MlflowClient()
@@ -51,23 +44,14 @@ def main():
 
         # Load the original model.pth file
         raw_model_path = os.path.join(model_dir, "data", "model.pth")
-        checkpoint = torch.load(raw_model_path, map_location=torch.device('cpu'), weights_only=True)
+        logger.info(f"Loading model from {raw_model_path}")
+        checkpoint = torch.load(raw_model_path, map_location=torch.device('cpu'))
 
-        # Extract hyperparameters and state_dict
-        model = LSTMModel(
-            input_size=checkpoint["input_size"],
-            hidden_size=checkpoint["hidden_size"],
-            num_layers=checkpoint["num_layers"],
-            dropout=checkpoint["dropout"],
-            output_size=checkpoint["output_size"]
-        )
-        model.load_state_dict(checkpoint["model_state_dict"])
-        model.eval()
-
-        # Re-save clean model.pth (only state_dict + metadata)
+        # Re-save the checkpoint
         cleaned_model_path = os.path.join(output_dir, "model.pth")
+        logger.info(f"Saving cleaned model to {cleaned_model_path}")
         torch.save({
-            "model_state_dict": model.state_dict(),
+            "model_state_dict": checkpoint["model_state_dict"],
             "input_size": checkpoint["input_size"],
             "hidden_size": checkpoint["hidden_size"],
             "num_layers": checkpoint["num_layers"],
@@ -84,13 +68,15 @@ def main():
             "metrics": run.data.metrics
         }
 
-        with open(os.path.join(output_dir, "model_metadata.json"), "w") as f:
+        metadata_path = os.path.join(output_dir, "model_metadata.json")
+        logger.info(f"Saving model metadata to {metadata_path}")
+        with open(metadata_path, "w") as f:
             json.dump(model_metadata, f, indent=4)
 
-        print(f"Model successfully saved to {output_dir}")
+        logger.info(f"Model successfully saved to {output_dir}")
 
     except Exception as e:
-        print(f"Error saving model: {e}")
+        logger.error(f"Error saving model: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":
